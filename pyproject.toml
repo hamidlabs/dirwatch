@@ -3,7 +3,20 @@ name = "dirwatch"
 version = "0.1.0"
 description = "A smart directory watcher that pops up a Mac-like card to triage new files (keep, delete, move, snooze)."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
+authors = [{ name = "Hamid" }]
+keywords = ["files", "downloads", "watcher", "organize", "cleanup", "linux", "desktop"]
+classifiers = [
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Desktop Environment :: File Managers",
+    "Topic :: Utilities",
+]
 dependencies = [
     "PySide6>=6.10",
     "watchdog>=4.0",
