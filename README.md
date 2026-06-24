@@ -1,8 +1,28 @@
-# dirwatch
+<p align="center">
+  <img src="docs/icon.png" width="120" alt="dirwatch icon">
+</p>
 
-A smart directory watcher. Point it at folders that grow on their own (your
-Downloads folder, a screenshots folder, a scanner inbox) and whenever a new
-file settles, a centered, floating macOS-style card asks what to do with it:
+<h1 align="center">dirwatch</h1>
+
+<p align="center">
+  A smart directory watcher for Linux. When a new file lands in a folder you
+  watch, a floating macOS-style card asks what to do with it.
+</p>
+
+<p align="center">
+  <a href="https://github.com/hamidlabs/dirwatch/releases/latest">
+    <img src="https://img.shields.io/github/v/release/hamidlabs/dirwatch" alt="release">
+  </a>
+  <img src="https://img.shields.io/badge/platform-Linux-blue" alt="platform">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="license">
+</p>
+
+<p align="center">
+  <img src="docs/screenshot-card.png" width="380" alt="Triage card">
+</p>
+
+Point it at folders that grow on their own (your Downloads folder, a screenshots
+folder, a scanner inbox) and whenever a new file settles, you get one card:
 
 - **Keep** — leave it, never ask again
 - **Move…** — file it into another folder
@@ -14,6 +34,21 @@ It lives in the system tray. Existing files in a folder are baselined (not
 prompted) when you first add it, so you only get asked about genuinely new
 arrivals. Decisions are remembered in a local SQLite database, so nothing is
 prompted twice, and snoozes survive a restart.
+
+## Screenshots
+
+When several files pile up (for example after the machine was off through a few
+snoozes), dirwatch shows a single **Review** window instead of a stack of cards:
+
+<p align="center">
+  <img src="docs/screenshot-review.png" width="700" alt="Review window">
+</p>
+
+A clean settings window for folders and behavior:
+
+<p align="center">
+  <img src="docs/screenshot-settings.png" width="760" alt="Settings window">
+</p>
 
 ## Highlights
 
