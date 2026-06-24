@@ -19,12 +19,12 @@ from ..util import category, human_age, human_size
 from .icon import app_icon
 from .style import QSS
 
-WINDOW_WIDTH = 720
+WINDOW_WIDTH = 700
+ROW_HEIGHT = 38
 
 # Fixed widths so a row always fits without a horizontal scrollbar.
-_BTN_WIDTHS = {"Keep": 60, "Move": 60, "Snooze": 76, "Delete": 68}
+_BTN_WIDTHS = {"Keep": 50, "Move": 48, "Snooze": 60, "Delete": 54}
 _NAME_ELIDE = 34
-_META_ELIDE = 52
 
 
 class _Row(QFrame):
@@ -46,9 +46,12 @@ class _Row(QFrame):
         self.check.setChecked(value)
 
     def _build(self) -> None:
+        # Compact, single-line row (Finder/Mail style): checkbox, small badge,
+        # name, muted meta, then fixed-width action buttons.
+        self.setFixedHeight(ROW_HEIGHT)
         lay = QHBoxLayout(self)
-        lay.setContentsMargins(12, 10, 12, 10)
-        lay.setSpacing(10)
+        lay.setContentsMargins(10, 0, 10, 0)
+        lay.setSpacing(6)
 
         self.check = QCheckBox()
         self.check.toggled.connect(self._win.update_bulk_label)
@@ -56,31 +59,23 @@ class _Row(QFrame):
 
         label, color = category(self._item.path)
         badge = QLabel(label, objectName="rowBadge")
-        badge.setFixedSize(42, 42)
+        badge.setFixedSize(34, 22)
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge.setStyleSheet(f"#rowBadge {{ background-color: {color}; }}")
-        lay.addWidget(badge)
+        lay.addWidget(badge, 0, Qt.AlignmentFlag.AlignVCenter)
 
-        # Name/meta column: stretches to fill, but text is elided so it never
-        # forces the row wider than the window (no horizontal scroll).
-        col = QVBoxLayout()
-        col.setSpacing(2)
         name = QLabel(self._elide(self._item.name, _NAME_ELIDE), objectName="rowName")
         name.setToolTip(self._item.path)
         name.setMinimumWidth(0)
-        col.addWidget(name)
+        lay.addWidget(name, 1)
+
         meta = QLabel(
-            self._elide(
-                f"{human_size(self._item.size)}  ·  "
-                f"{human_age(self._item.age_seconds)}  ·  "
-                f"in {self._item.p.parent.name or 'watched'}",
-                _META_ELIDE,
-            ),
+            f"{human_size(self._item.size)} · {human_age(self._item.age_seconds)}",
             objectName="rowMeta",
         )
         meta.setMinimumWidth(0)
-        col.addWidget(meta)
-        lay.addLayout(col, 1)
+        lay.addWidget(meta, 0)
+        lay.addSpacing(4)
 
         for text, obj, slot in (
             ("Keep", "miniPrimary", self._keep),
@@ -92,7 +87,7 @@ class _Row(QFrame):
             b.setCursor(Qt.CursorShape.PointingHandCursor)
             b.setFixedWidth(_BTN_WIDTHS[text])
             b.clicked.connect(slot)
-            lay.addWidget(b, 0)
+            lay.addWidget(b, 0, Qt.AlignmentFlag.AlignVCenter)
 
     # per-row actions
     def _keep(self):
@@ -173,12 +168,12 @@ class DigestWindow(QWidget):
 
         # Header
         head = QVBoxLayout()
-        head.setContentsMargins(22, 20, 22, 12)
-        head.setSpacing(2)
+        head.setContentsMargins(16, 12, 10, 8)
+        head.setSpacing(1)
         top = QHBoxLayout()
-        top.setSpacing(10)
+        top.setSpacing(8)
         icon = QLabel()
-        icon.setPixmap(app_icon(True).pixmap(24, 24))
+        icon.setPixmap(app_icon(True).pixmap(20, 20))
         top.addWidget(icon, 0, Qt.AlignmentFlag.AlignVCenter)
         self._title = QLabel("Files to review", objectName="windowTitle")
         top.addWidget(self._title)
@@ -200,8 +195,8 @@ class DigestWindow(QWidget):
         self._host = QWidget(objectName="rowHost")
         self._host.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._host_lay = QVBoxLayout(self._host)
-        self._host_lay.setContentsMargins(16, 4, 16, 8)
-        self._host_lay.setSpacing(8)
+        self._host_lay.setContentsMargins(8, 0, 8, 0)
+        self._host_lay.setSpacing(0)
         self._host_lay.addStretch(1)
         self._scroll.setWidget(self._host)
         root.addWidget(self._scroll, 1)
@@ -210,8 +205,8 @@ class DigestWindow(QWidget):
         bar = QWidget(objectName="bulkBar")
         bar.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         bl = QHBoxLayout(bar)
-        bl.setContentsMargins(18, 12, 18, 12)
-        bl.setSpacing(8)
+        bl.setContentsMargins(14, 8, 14, 8)
+        bl.setSpacing(6)
         self._select_all = QCheckBox("Select all")
         self._select_all.toggled.connect(self._toggle_all)
         bl.addWidget(self._select_all)
@@ -233,7 +228,7 @@ class DigestWindow(QWidget):
         self._bulk_buttons = bar
         root.addWidget(bar)
 
-        self.resize(WINDOW_WIDTH, 560)
+        self.resize(WINDOW_WIDTH, 360)
 
     # ---- data --------------------------------------------------------------
 
@@ -263,9 +258,16 @@ class DigestWindow(QWidget):
         self._select_all.setChecked(False)
         self._select_all.blockSignals(False)
         self.update_bulk_label()
+        self._fit_height()
         self._on_changed()
         if n == 0:
             self._on_empty()
+
+    def _fit_height(self) -> None:
+        """Size the window to its contents (capped), so it's never a big empty box."""
+        visible = min(max(len(self._rows), 1), 11)
+        chrome = 16 + 52 + 50 + 16  # margins + header + bulk bar
+        self.resize(WINDOW_WIDTH, min(640, chrome + visible * ROW_HEIGHT))
 
     def update_bulk_label(self) -> None:
         """Reflect how many files the bulk buttons will act on (selection, or

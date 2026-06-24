@@ -114,42 +114,43 @@ QMenu::item {
 QMenu::item:selected { background-color: #007aff; color: white; }
 
 /* ---- Review / digest window ---------------------------------------- */
-#window { background-color: #f5f5f7; border-radius: 16px; }
-#windowTitle { color: #1d1d1f; font-size: 18px; font-weight: 700; }
-#windowSub { color: #8a8a8e; font-size: 13px; }
+#window { background-color: #f5f5f7; border-radius: 14px; }
+#windowTitle { color: #1d1d1f; font-size: 15px; font-weight: 700; }
+#windowSub { color: #8a8a8e; font-size: 11px; }
 
 QScrollArea#rowScroll { border: none; background: #f5f5f7; }
 QWidget#rowHost { background: #f5f5f7; }
 
 #row {
-    background-color: #ffffff;
-    border: 1px solid rgba(0,0,0,0.07);
-    border-radius: 12px;
+    background-color: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    border-radius: 0;
 }
-#row:hover { background-color: #fbfbfd; }
-#rowBadge { color: white; font-size: 13px; font-weight: 800; border-radius: 11px; }
-#rowName { color: #1d1d1f; font-size: 14px; font-weight: 600; }
-#rowMeta { color: #8a8a8e; font-size: 12px; }
+#row:hover { background-color: #eceef2; }
+#rowBadge { color: white; font-size: 10px; font-weight: 800; border-radius: 6px; }
+#rowName { color: #1d1d1f; font-size: 13px; font-weight: 600; }
+#rowMeta { color: #8a8a8e; font-size: 11px; }
 
 QPushButton#mini {
     background-color: #f0f0f3;
     color: #1d1d1f;
     border: none;
-    border-radius: 7px;
-    padding: 6px 6px;
-    font-size: 12px;
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 11px;
     font-weight: 600;
 }
 QPushButton#mini:hover { background-color: #e6e6ea; }
 QPushButton#miniPrimary {
     background-color: #007aff; color: white; border: none;
-    border-radius: 7px; padding: 6px 6px; font-size: 12px; font-weight: 600;
+    border-radius: 6px; padding: 4px 6px; font-size: 11px; font-weight: 600;
 }
 QPushButton#miniPrimary:hover { background-color: #0a6ee0; }
 QPushButton#miniDanger {
     background-color: #ffffff; color: #e5484d;
     border: 1px solid rgba(229,72,77,0.30);
-    border-radius: 7px; padding: 6px 6px; font-size: 12px; font-weight: 600;
+    border-radius: 6px; padding: 4px 6px; font-size: 11px; font-weight: 600;
 }
 QPushButton#miniDanger:hover { background-color: #fdecec; }
 
