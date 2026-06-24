@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=dirwatch
+GenericName=File triage watcher
+Comment=Ask what to do with new files in your folders: keep, move, snooze or trash
+Exec=dirwatch
+Icon=dirwatch
+Terminal=false
+Categories=Utility;Filesystem;
+Keywords=files;downloads;watch;organize;cleanup;trash;
+StartupNotify=false
