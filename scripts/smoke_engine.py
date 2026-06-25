@@ -157,6 +157,32 @@ def main():
     assert db.get(delivered[-1].path, delivered[-1].inode).status == Status.KEPT
     print("OK: keep works on a folder")
 
+    # A file held open by another process is not prompted until it's closed.
+    import os as _os
+    busy = watch / "watching.mp4"
+    busy.write_bytes(b"x" * 2000)
+    fh = open(busy, "rb")            # simulate a media player holding it open
+    delivered.clear()
+    eng.note_candidate(str(busy), str(watch))
+    eng.tick()
+    clock.advance(cfg.debounce_seconds + 1)
+    eng.tick()
+    assert all(d.name != "watching.mp4" for d in delivered), "prompted while in use"
+    fh.close()                      # user closes the player
+    clock.advance(cfg.debounce_seconds + 1)
+    eng.tick()
+    assert any(d.name == "watching.mp4" for d in delivered), "not prompted after closed"
+    print("OK: in-use file deferred until closed")
+
+    # Archive linking: folder name matches a sibling archive.
+    from dirwatch.util import find_source_archive, archive_base, is_archive
+    assert archive_base("Foo.tar.gz") == "Foo" and is_archive("Foo.zip")
+    (watch / "Bundle.zip").write_bytes(b"zip")
+    (watch / "Bundle").mkdir()
+    found = find_source_archive(str(watch / "Bundle"))
+    assert found is not None and found.name == "Bundle.zip", "source archive not linked"
+    print("OK: archive linked to extracted folder")
+
     # Snoozed files must NOT appear in the prompt for newly-arrived files, and
     # each snooze fires on its own independent schedule.
     delivered.clear()

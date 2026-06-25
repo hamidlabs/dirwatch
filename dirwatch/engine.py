@@ -31,6 +31,33 @@ class _Candidate:
 _MAX_WALK = 20000
 
 
+def _open_file_paths() -> set[str]:
+    """Absolute paths of files currently open by readable processes (via /proc).
+
+    Catches media players / editors holding a file open. Only processes owned by
+    this user are readable, which is exactly where the user's viewers live.
+    """
+    out: set[str] = set()
+    try:
+        pids = [p for p in os.listdir("/proc") if p.isdigit()]
+    except OSError:
+        return out
+    for pid in pids:
+        fd_dir = f"/proc/{pid}/fd"
+        try:
+            fds = os.listdir(fd_dir)
+        except OSError:
+            continue  # not ours / gone
+        for fd in fds:
+            try:
+                target = os.readlink(f"{fd_dir}/{fd}")
+            except OSError:
+                continue
+            if target.startswith("/"):
+                out.add(target)
+    return out
+
+
 class Engine:
     def __init__(
         self,
@@ -140,6 +167,7 @@ class Engine:
     def _settled_items(self) -> list[Item]:
         now = self._now()
         ready: list[Item] = []
+        open_paths: set[str] | None = None  # scanned lazily, at most once/tick
         with self._lock:
             paths = list(self._candidates)
         for path in paths:
@@ -161,6 +189,14 @@ class Engine:
                 continue
             if now - cand.stable_since < self._cfg.debounce_seconds:
                 continue
+            # Otherwise ready: but don't interrupt a file that's open in another
+            # app (e.g. a video being watched). Wait until it's closed.
+            if self._cfg.skip_in_use and not probe["is_dir"]:
+                if open_paths is None:
+                    open_paths = _open_file_paths()
+                if path in open_paths:
+                    cand.stable_since = now  # re-arm; settle once closed + stable
+                    continue
             # Settled.
             self._drop(path)
             item = self._consider(

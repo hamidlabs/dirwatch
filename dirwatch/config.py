@@ -38,6 +38,9 @@ class Config:
         ]
     )
     ignore_hidden: bool = True
+    # Don't prompt while a file is open in another app (e.g. a video you're
+    # watching); wait until it's closed.
+    skip_in_use: bool = True
     # Start watching automatically when the app launches.
     autostart_watching: bool = True
     # Launch dirwatch on login (managed via an XDG autostart entry).

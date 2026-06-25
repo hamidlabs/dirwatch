@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 from .. import actions
 from ..actions import ActionError
 from ..db import Database
+from .archive_prompt import offer_archive_cleanup
 from ..models import Item, Status
 from ..util import human_age, human_size, item_badge
 from .icon import app_icon
@@ -92,6 +93,7 @@ class _Row(QFrame):
     # per-row actions
     def _keep(self):
         actions.keep(self._win.db, self._item)
+        offer_archive_cleanup(self._win, self._win.db, self._item)
         self._win.refresh()
 
     def _delete(self):
@@ -109,6 +111,9 @@ class _Row(QFrame):
             actions.move(self._win.db, self._item, dest)
         except ActionError as exc:
             QMessageBox.warning(self._win, "dirwatch", str(exc))
+            self._win.refresh()
+            return
+        offer_archive_cleanup(self._win, self._win.db, self._item)
         self._win.refresh()
 
     def _snooze(self):

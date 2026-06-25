@@ -65,3 +65,45 @@ def item_badge(item) -> tuple[str, str]:
     if getattr(item, "is_dir", False):
         return ("DIR", "#f0a020")
     return category(item.path)
+
+
+# ---- archive linking -------------------------------------------------------
+
+_ARCHIVE_EXTS = {
+    ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".zst", ".lz4",
+    ".tgz", ".tbz2", ".txz",
+}
+
+
+def archive_base(name: str) -> str:
+    """Strip archive extensions, including double ones like .tar.gz."""
+    base = name
+    for _ in range(2):  # handles e.g. foo.tar.gz -> foo
+        root, dot, ext = base.rpartition(".")
+        if dot and f".{ext.lower()}" in _ARCHIVE_EXTS:
+            base = root
+        else:
+            break
+    return base
+
+
+def is_archive(name: str) -> bool:
+    return archive_base(name) != name
+
+
+def find_source_archive(folder_path: str) -> Path | None:
+    """Find an archive in the same directory whose name matches this folder
+    (e.g. folder 'Foo' <- 'Foo.zip' / 'Foo.tar.gz')."""
+    folder = Path(folder_path)
+    target = folder.name
+    try:
+        entries = list(folder.parent.iterdir())
+    except OSError:
+        return None
+    for e in entries:
+        try:
+            if e.is_file() and is_archive(e.name) and archive_base(e.name) == target:
+                return e
+        except OSError:
+            continue
+    return None

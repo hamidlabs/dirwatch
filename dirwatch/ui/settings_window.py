@@ -149,6 +149,10 @@ class SettingsWindow(QWidget):
         self._ignore_hidden.setChecked(self._cfg.ignore_hidden)
         b2.addWidget(self._ignore_hidden)
 
+        self._skip_in_use = QCheckBox("Don't ask while a file is open in another app")
+        self._skip_in_use.setChecked(self._cfg.skip_in_use)
+        b2.addWidget(self._skip_in_use)
+
         b2.addLayout(self._spin_row(
             "Wait for a file to finish before asking",
             "debounce", self._cfg.debounce_seconds, 1, 120, " s"))
@@ -308,6 +312,7 @@ class SettingsWindow(QWidget):
         self._cfg.autostart_watching = self._watch_launch.isChecked()
         self._cfg.autostart_login = self._login.isChecked()
         self._cfg.ignore_hidden = self._ignore_hidden.isChecked()
+        self._cfg.skip_in_use = self._skip_in_use.isChecked()
         self._cfg.debounce_seconds = self._spin_debounce.value()
         self._cfg.batch_threshold = self._spin_threshold.value()
         self._cfg.retention_days = self._spin_retention.value()

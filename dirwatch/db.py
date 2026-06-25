@@ -84,6 +84,13 @@ class Database:
             ).fetchone()
         return self._row_to_item(row) if row else None
 
+    def get_by_path(self, path: str) -> Item | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM items WHERE path=? ORDER BY id DESC LIMIT 1", (path,)
+            ).fetchone()
+        return self._row_to_item(row) if row else None
+
     def upsert(self, item: Item) -> Item:
         """Insert or update by (path, inode), returning the row with its id."""
         with self._lock:

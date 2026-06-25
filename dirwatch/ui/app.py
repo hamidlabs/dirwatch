@@ -15,6 +15,7 @@ from ..db import Database
 from ..engine import Engine
 from ..models import Item, Status
 from ..watcher import Watcher
+from .archive_prompt import offer_archive_cleanup
 from .digest import DigestWindow
 from .icon import app_icon
 from .popup import PopupManager
@@ -148,6 +149,7 @@ class DirwatchApp:
 
     def keep(self, item: Item) -> None:
         actions.keep(self._db, item)
+        offer_archive_cleanup(None, self._db, item)
 
     def ignore(self, item: Item) -> None:
         actions.ignore(self._db, item)
@@ -172,6 +174,8 @@ class DirwatchApp:
             actions.move(self._db, item, dest)
         except ActionError as exc:
             self._warn(str(exc))
+            return
+        offer_archive_cleanup(None, self._db, item)
 
     # ---- tray --------------------------------------------------------------
 

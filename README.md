@@ -65,6 +65,9 @@ A clean settings window for folders and behavior:
 - **Robust.** Snoozed files are excluded from new-file prompts and each wakes on
   its own schedule. A file deleted from the file manager while snoozed is quietly
   dropped, never shown, never crashes. Old handled/missing records are pruned.
+- **Stays out of your way.** Won't prompt for a file that's open in another app
+  (e.g. a video you're watching) until you close it. And when you keep an
+  extracted folder, it offers to trash the leftover source archive.
 
 ## Install
 
