@@ -28,7 +28,7 @@ folder, a scanner inbox) and whenever a new file settles, you get one card:
 - **Move…** — file it into another folder
 - **Snooze** — ask again in 1 hour / this evening / tomorrow / next week
 - **Delete** — send it to the Trash (recoverable)
-- **Ignore** — like Keep, for clutter you want to stop seeing
+- **Later** — quick dismiss; ask again in 1 hour
 
 Folders count too: extract an archive and dirwatch offers the new folder once it
 stops changing (Delete sends the whole folder to Trash, Move relocates it).

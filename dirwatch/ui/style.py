@@ -154,6 +154,14 @@ QPushButton#miniDanger {
 }
 QPushButton#miniDanger:hover { background-color: #fdecec; }
 
+QPushButton#iconBtn {
+    background-color: transparent;
+    border: none;
+    border-radius: 6px;
+}
+QPushButton#iconBtn:hover { background-color: #dfe2e7; }
+QPushButton#iconBtn:pressed { background-color: #d2d6dc; }
+
 #bulkBar {
     background-color: #ececef;
     border-top: 1px solid rgba(0,0,0,0.08);

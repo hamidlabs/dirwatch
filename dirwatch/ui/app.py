@@ -151,8 +151,8 @@ class DirwatchApp:
         actions.keep(self._db, item)
         offer_archive_cleanup(None, self._db, item)
 
-    def ignore(self, item: Item) -> None:
-        actions.ignore(self._db, item)
+    def later(self, item: Item) -> None:
+        actions.later(self._db, item)
 
     def delete(self, item: Item) -> None:
         try:

@@ -20,9 +20,9 @@ def keep(db: Database, item: Item) -> None:
     db.set_status(item.id, Status.KEPT)
 
 
-def ignore(db: Database, item: Item) -> None:
-    """Like keep, but semantically 'stop bothering me about this'."""
-    db.set_status(item.id, Status.IGNORED)
+def later(db: Database, item: Item) -> None:
+    """Quick dismiss: ask again in one hour (a one-click snooze)."""
+    snooze(db, item, 3600)
 
 
 def delete(db: Database, item: Item) -> None:

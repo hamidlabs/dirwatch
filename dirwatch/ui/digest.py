@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QPoint, QSize, Qt
 from PySide6.QtWidgets import (
     QCheckBox, QFileDialog, QFrame, QHBoxLayout, QLabel, QMenu, QMessageBox,
     QPushButton, QScrollArea, QVBoxLayout, QWidget,
@@ -15,17 +15,23 @@ from .. import actions
 from ..actions import ActionError
 from ..db import Database
 from .archive_prompt import offer_archive_cleanup
+from .icon import action_icon
 from ..models import Item, Status
 from ..util import human_age, human_size, item_badge
 from .icon import app_icon
 from .style import QSS
 
-WINDOW_WIDTH = 700
-ROW_HEIGHT = 38
+WINDOW_WIDTH = 600
+ROW_HEIGHT = 40
+_NAME_ELIDE = 40
 
-# Fixed widths so a row always fits without a horizontal scrollbar.
-_BTN_WIDTHS = {"Keep": 50, "Move": 48, "Snooze": 60, "Delete": 54}
-_NAME_ELIDE = 34
+# Row actions as compact icon buttons: (kind, tooltip, color, handler-name).
+_ROW_ACTIONS = [
+    ("keep", "Keep", "#007aff"),
+    ("move", "Move to…", "#5a5a5e"),
+    ("snooze", "Snooze", "#5a5a5e"),
+    ("delete", "Delete", "#e5484d"),
+]
 
 
 class _Row(QFrame):
@@ -78,16 +84,16 @@ class _Row(QFrame):
         lay.addWidget(meta, 0)
         lay.addSpacing(4)
 
-        for text, obj, slot in (
-            ("Keep", "miniPrimary", self._keep),
-            ("Move", "mini", self._move),
-            ("Snooze", "mini", self._snooze),
-            ("Delete", "miniDanger", self._delete),
-        ):
-            b = QPushButton(text, objectName=obj)
+        handlers = {"keep": self._keep, "move": self._move,
+                    "snooze": self._snooze, "delete": self._delete}
+        for kind, tip, color in _ROW_ACTIONS:
+            b = QPushButton(objectName="iconBtn")
+            b.setIcon(action_icon(kind, color))
+            b.setIconSize(QSize(18, 18))
+            b.setFixedSize(28, 26)
+            b.setToolTip(tip)
             b.setCursor(Qt.CursorShape.PointingHandCursor)
-            b.setFixedWidth(_BTN_WIDTHS[text])
-            b.clicked.connect(slot)
+            b.clicked.connect(handlers[kind])
             lay.addWidget(b, 0, Qt.AlignmentFlag.AlignVCenter)
 
     # per-row actions
@@ -223,11 +229,12 @@ class DigestWindow(QWidget):
         snooze_all.clicked.connect(self._bulk_snooze_menu)
         move_all = QPushButton("Move…", objectName="ctaGhost")
         move_all.clicked.connect(lambda: self._bulk("move"))
-        ignore_all = QPushButton("Ignore", objectName="ctaGhost")
-        ignore_all.clicked.connect(lambda: self._bulk("ignore"))
+        later_all = QPushButton("Later", objectName="ctaGhost")
+        later_all.setToolTip("Ask again in 1 hour")
+        later_all.clicked.connect(lambda: self._bulk("later"))
         delete_all = QPushButton("Delete", objectName="miniDanger")
         delete_all.clicked.connect(lambda: self._bulk("delete"))
-        for b in (keep_all, snooze_all, move_all, ignore_all, delete_all):
+        for b in (keep_all, snooze_all, move_all, later_all, delete_all):
             b.setCursor(Qt.CursorShape.PointingHandCursor)
             bl.addWidget(b)
         self._bulk_buttons = bar
@@ -315,8 +322,8 @@ class DigestWindow(QWidget):
             try:
                 if kind == "keep":
                     actions.keep(self.db, item)
-                elif kind == "ignore":
-                    actions.ignore(self.db, item)
+                elif kind == "later":
+                    actions.later(self.db, item)
                 elif kind == "delete":
                     actions.delete(self.db, item)
                 elif kind == "move":

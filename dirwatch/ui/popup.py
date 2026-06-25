@@ -26,7 +26,7 @@ APP_ID = "dirwatch"
 class Controller(Protocol):
     def keep(self, item: Item) -> None: ...
     def delete(self, item: Item) -> None: ...
-    def ignore(self, item: Item) -> None: ...
+    def later(self, item: Item) -> None: ...
     def move(self, item: Item) -> None: ...
     def snooze(self, item: Item, seconds: int) -> None: ...
 
@@ -145,7 +145,7 @@ class Popup(QWidget):
         lay.addLayout(primary_row)
         lay.addSpacing(12)
 
-        # Secondary subtle actions: Move… · Snooze · Ignore.
+        # Secondary subtle actions: Move… · Snooze · Later.
         sub = QHBoxLayout()
         sub.setSpacing(4)
         sub.addStretch(1)
@@ -162,10 +162,11 @@ class Popup(QWidget):
         sub.addWidget(self._snooze_btn)
         sub.addWidget(QLabel("·", objectName="dot"))
 
-        ignore = QPushButton("Ignore", objectName="linkDanger")
-        ignore.setCursor(Qt.CursorShape.PointingHandCursor)
-        ignore.clicked.connect(lambda: self._do(self._ctrl.ignore))
-        sub.addWidget(ignore)
+        later = QPushButton("Later", objectName="link")
+        later.setCursor(Qt.CursorShape.PointingHandCursor)
+        later.setToolTip("Ask again in 1 hour")
+        later.clicked.connect(lambda: self._do(self._ctrl.later))
+        sub.addWidget(later)
         sub.addStretch(1)
         lay.addLayout(sub)
 
