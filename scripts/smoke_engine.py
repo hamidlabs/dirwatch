@@ -121,6 +121,42 @@ def main():
     assert all(d.name != "big.iso.crdownload" for d in delivered), "temp file prompted"
     print("OK: partial download ignored")
 
+    # Directories (e.g. an extracted archive) are triaged like files.
+    folder = watch / "extracted-project"
+    folder.mkdir()
+    (folder / "readme.txt").write_bytes(b"hello")
+    (folder / "data.bin").write_bytes(b"x" * 1000)
+    delivered.clear()
+    settle(folder)
+    assert delivered and delivered[-1].name == "extracted-project", "folder not triaged"
+    assert delivered[-1].is_dir is True, "folder not marked is_dir"
+    assert delivered[-1].size >= 1000, "folder size should sum its contents"
+    print("OK: new folder is triaged (is_dir, total size)")
+
+    # A folder still being written (extraction in progress) keeps resetting the
+    # settle timer until its contents stop changing.
+    f2 = watch / "downloading-set"
+    f2.mkdir()
+    eng.note_candidate(str(f2), str(watch))
+    eng.tick()                                   # snapshot: empty
+    (f2 / "part1").write_bytes(b"x" * 10)
+    clock.advance(cfg.debounce_seconds + 1)
+    eng.tick()                                   # changed -> reset
+    before = len(delivered)
+    (f2 / "part2").write_bytes(b"x" * 10)
+    clock.advance(cfg.debounce_seconds + 1)
+    eng.tick()                                   # changed again -> reset
+    assert len(delivered) == before, "folder delivered while still being written"
+    clock.advance(cfg.debounce_seconds + 1)
+    eng.tick()                                   # stable -> delivered
+    assert len(delivered) == before + 1 and delivered[-1].name == "downloading-set"
+    print("OK: folder settles only after it stops changing")
+
+    # Keep works on a folder item too.
+    actions.keep(db, delivered[-1])
+    assert db.get(delivered[-1].path, delivered[-1].inode).status == Status.KEPT
+    print("OK: keep works on a folder")
+
     # Snoozed files must NOT appear in the prompt for newly-arrived files, and
     # each snooze fires on its own independent schedule.
     delivered.clear()

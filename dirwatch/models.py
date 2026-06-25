@@ -36,6 +36,7 @@ class Item:
     first_seen: float = 0.0
     decided_at: float | None = None
     snooze_until: float | None = None
+    is_dir: bool = False
     id: int | None = None
 
     @property

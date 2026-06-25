@@ -7,6 +7,7 @@ calling thread, whenever a file is ready to be triaged.
 from __future__ import annotations
 
 import os
+import stat
 import time
 import threading
 from collections.abc import Callable
@@ -23,8 +24,11 @@ ItemReady = Callable[[Item], None]
 @dataclass
 class _Candidate:
     watch_dir: str
-    last_size: int | None = None
+    last_sig: tuple | None = None
     stable_since: float = field(default_factory=time.time)
+
+# Cap the directory walk so a huge tree can't stall a tick.
+_MAX_WALK = 20000
 
 
 class Engine:
@@ -75,7 +79,10 @@ class Engine:
             except OSError:
                 entries = []
             for entry in entries:
-                if not entry.is_file() or self._is_ignored(str(entry)):
+                if self._is_ignored(str(entry)):
+                    continue
+                is_dir = entry.is_dir()
+                if not (entry.is_file() or is_dir):
                     continue
                 try:
                     st = entry.stat()
@@ -83,8 +90,10 @@ class Engine:
                     continue
                 self._db.upsert(
                     Item(
-                        path=str(entry), inode=st.st_ino, size=st.st_size,
+                        path=str(entry), inode=st.st_ino,
+                        size=0 if is_dir else st.st_size,
                         watch_dir=key, status=Status.BASELINE, first_seen=now,
+                        is_dir=is_dir,
                     )
                 )
         self._db.mark_dir_baselined(key)
@@ -98,6 +107,36 @@ class Engine:
         for item in self._db.due_snoozed(self._now()):
             self._wake(item)
 
+    def _probe(self, path: str) -> dict | None | str:
+        """Return a stability snapshot, "skip" on a transient error, or None if
+        the path is gone. For a directory the signature spans its whole tree, so
+        an in-progress extraction keeps changing until it finishes."""
+        try:
+            st = os.stat(path)
+        except (FileNotFoundError, NotADirectoryError):
+            return None
+        except OSError:
+            return "skip"
+        if not stat.S_ISDIR(st.st_mode):
+            return {"sig": ("f", st.st_size), "is_dir": False,
+                    "size": st.st_size, "inode": st.st_ino}
+        count = total = 0
+        newest = st.st_mtime
+        for root, _dirs, files in os.walk(path):
+            for name in files:
+                try:
+                    s = os.stat(os.path.join(root, name))
+                except OSError:
+                    continue
+                count += 1
+                total += s.st_size
+                if s.st_mtime > newest:
+                    newest = s.st_mtime
+            if count > _MAX_WALK:
+                break
+        return {"sig": ("d", count, total, int(newest)), "is_dir": True,
+                "size": total, "inode": st.st_ino}
+
     def _settled_items(self) -> list[Item]:
         now = self._now()
         ready: list[Item] = []
@@ -110,28 +149,31 @@ class Engine:
             if self._is_ignored(path):
                 self._drop(path)
                 continue
-            try:
-                st = os.stat(path)
-            except (FileNotFoundError, NotADirectoryError):
+            probe = self._probe(path)
+            if probe is None:
                 self._drop(path)
                 continue
-            except OSError:
+            if probe == "skip":
                 continue
-            if cand.last_size != st.st_size:
-                cand.last_size = st.st_size
+            if cand.last_sig != probe["sig"]:
+                cand.last_sig = probe["sig"]
                 cand.stable_since = now
                 continue
             if now - cand.stable_since < self._cfg.debounce_seconds:
                 continue
             # Settled.
             self._drop(path)
-            item = self._consider(path, st.st_ino, st.st_size, cand.watch_dir, now)
+            item = self._consider(
+                path, probe["inode"], probe["size"], cand.watch_dir, now,
+                probe["is_dir"],
+            )
             if item is not None:
                 ready.append(item)
         return ready
 
     def _consider(
-        self, path: str, inode: int, size: int, watch_dir: str, now: float
+        self, path: str, inode: int, size: int, watch_dir: str, now: float,
+        is_dir: bool = False,
     ) -> Item | None:
         existing = self._db.get(path, inode)
         if existing is not None:
@@ -141,7 +183,7 @@ class Engine:
                 return None  # already queued elsewhere
         item = Item(
             path=path, inode=inode, size=size, watch_dir=watch_dir,
-            status=Status.PENDING, first_seen=now,
+            status=Status.PENDING, first_seen=now, is_dir=is_dir,
         )
         return self._db.upsert(item)
 

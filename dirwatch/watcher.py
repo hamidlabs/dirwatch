@@ -22,10 +22,10 @@ class _Handler(FileSystemEventHandler):
         self._on_candidate = on_candidate
 
     def _emit(self, event: FileSystemEvent, path: str | bytes) -> None:
-        if event.is_directory:
-            return
         p = path.decode() if isinstance(path, bytes) else path
         # Only react to direct children of the watched dir, not nested trees.
+        # Directories count too: a newly extracted/created folder is triaged
+        # like a file (the engine waits for it to stop changing first).
         if Path(p).parent != Path(self._watch_dir):
             return
         self._on_candidate(p, self._watch_dir)

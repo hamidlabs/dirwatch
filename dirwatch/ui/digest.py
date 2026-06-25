@@ -15,7 +15,7 @@ from .. import actions
 from ..actions import ActionError
 from ..db import Database
 from ..models import Item, Status
-from ..util import category, human_age, human_size
+from ..util import human_age, human_size, item_badge
 from .icon import app_icon
 from .style import QSS
 
@@ -57,7 +57,7 @@ class _Row(QFrame):
         self.check.toggled.connect(self._win.update_bulk_label)
         lay.addWidget(self.check, 0, Qt.AlignmentFlag.AlignVCenter)
 
-        label, color = category(self._item.path)
+        label, color = item_badge(self._item)
         badge = QLabel(label, objectName="rowBadge")
         badge.setFixedSize(34, 22)
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)

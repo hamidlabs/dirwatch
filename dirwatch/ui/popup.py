@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..models import Item
-from ..util import category, human_age, human_size
+from ..util import human_age, human_size, item_badge
 from .style import QSS
 
 CARD_WIDTH = 420
@@ -84,7 +84,7 @@ class Popup(QWidget):
         lay.setSpacing(0)
 
         # Big centered file-type badge (the "icon").
-        label, color = category(self._item.path)
+        label, color = item_badge(self._item)
         badge = QLabel(label, objectName="iconBadge")
         badge.setFixedSize(72, 72)
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -101,8 +101,9 @@ class Popup(QWidget):
         lay.addSpacing(8)
 
         # Message line, macOS-alert style.
+        noun = "folder" if self._item.is_dir else "file"
         msg = QLabel(
-            f"New file in your {self._folder_name()} folder.\n"
+            f"New {noun} in your {self._folder_name()} folder.\n"
             "What would you like to do with it?",
             objectName="message",
         )

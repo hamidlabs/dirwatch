@@ -58,3 +58,10 @@ _CATEGORIES: dict[str, tuple[str, str]] = {
 def category(path: str) -> tuple[str, str]:
     suffix = Path(path).suffix.lower()
     return _CATEGORIES.get(suffix, (suffix.lstrip(".").upper()[:4] or "FILE", "#64748b"))
+
+
+def item_badge(item) -> tuple[str, str]:
+    """Badge label + color for an item, with a distinct look for folders."""
+    if getattr(item, "is_dir", False):
+        return ("DIR", "#f0a020")
+    return category(item.path)

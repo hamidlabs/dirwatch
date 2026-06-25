@@ -30,6 +30,9 @@ folder, a scanner inbox) and whenever a new file settles, you get one card:
 - **Delete** — send it to the Trash (recoverable)
 - **Ignore** — like Keep, for clutter you want to stop seeing
 
+Folders count too: extract an archive and dirwatch offers the new folder once it
+stops changing (Delete sends the whole folder to Trash, Move relocates it).
+
 It lives in the system tray. Existing files in a folder are baselined (not
 prompted) when you first add it, so you only get asked about genuinely new
 arrivals. Decisions are remembered in a local SQLite database, so nothing is

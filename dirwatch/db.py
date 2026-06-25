@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS items (
     first_seen   REAL NOT NULL,
     decided_at   REAL,
     snooze_until REAL,
+    is_dir       INTEGER NOT NULL DEFAULT 0,
     UNIQUE(path, inode)
 );
 CREATE INDEX IF NOT EXISTS idx_items_status ON items(status);
@@ -47,6 +48,13 @@ class Database:
         self._lock = threading.Lock()
         with self._lock:
             self._conn.executescript(_SCHEMA)
+            # Migration for databases created before directory support.
+            try:
+                self._conn.execute(
+                    "ALTER TABLE items ADD COLUMN is_dir INTEGER NOT NULL DEFAULT 0"
+                )
+            except sqlite3.OperationalError:
+                pass  # column already exists
             self._conn.commit()
 
     def close(self) -> None:
@@ -66,6 +74,7 @@ class Database:
             first_seen=row["first_seen"],
             decided_at=row["decided_at"],
             snooze_until=row["snooze_until"],
+            is_dir=bool(row["is_dir"]),
         )
 
     def get(self, path: str, inode: int) -> Item | None:
@@ -81,19 +90,20 @@ class Database:
             cur = self._conn.execute(
                 """
                 INSERT INTO items (path, inode, size, watch_dir, status,
-                                   first_seen, decided_at, snooze_until)
-                VALUES (?,?,?,?,?,?,?,?)
+                                   first_seen, decided_at, snooze_until, is_dir)
+                VALUES (?,?,?,?,?,?,?,?,?)
                 ON CONFLICT(path, inode) DO UPDATE SET
                     size=excluded.size,
                     watch_dir=excluded.watch_dir,
                     status=excluded.status,
                     decided_at=excluded.decided_at,
-                    snooze_until=excluded.snooze_until
+                    snooze_until=excluded.snooze_until,
+                    is_dir=excluded.is_dir
                 """,
                 (
                     item.path, item.inode, item.size, item.watch_dir,
                     item.status.value, item.first_seen, item.decided_at,
-                    item.snooze_until,
+                    item.snooze_until, int(item.is_dir),
                 ),
             )
             self._conn.commit()
